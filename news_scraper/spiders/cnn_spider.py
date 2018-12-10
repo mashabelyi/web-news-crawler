@@ -35,9 +35,9 @@ class CNNSpider(Spider):
         Receive links to archived articles:
         http://web.archive.org/web/{timestamp}/http://www.cnn.com/{yyyy}/{mm}/{dd}/TOPIC/{article-name}.html
         """
+        url = response.meta['wayback_machine_url']
+
         try:
-            url = response.meta['wayback_machine_url']
-            
             ## parse out topic, date
             m = re.search('.+\.com\/(\d{4}\/\d{2}\/\d{2})\/([^\/]+)\/.+', url)
             date = tuple(m.group(1).split("/"))
@@ -55,7 +55,9 @@ class CNNSpider(Spider):
                 'source': self.domain
             }
             return item
-        except:
-            print("error parsing cnn")
+
+        except Exception as e:
+            self.logger.warning("error parsing url " + url)
+            self.logger.warning(e)
             pass
 

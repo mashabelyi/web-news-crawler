@@ -73,11 +73,6 @@ class FoxnewsSpider(Spider):
         title = None
         content = None
 
-        # if url.find('www.foxnews.com:80') >=0:
-        #     self.logger.warning("skipping url: " + url)
-        #     return None
-
-
         try:
             ## parse out topic, date
             m = re.search('.+\/([^\/]+)\/(\d{4}\/\d{2}\/\d{2})\/.+', url)
