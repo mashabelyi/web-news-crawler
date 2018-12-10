@@ -56,5 +56,6 @@ class CNNSpider(Spider):
             }
             return item
         except:
+            print("error parsing cnn")
             pass
 

@@ -41,39 +41,72 @@ class FoxnewsSpider(Spider):
         return ({'timestamp': response.meta['wayback_machine_time'].timestamp(), 
             'url': response.url})
 
+    def parse2(self, response, url):
+        ## parse for older versions of fox
+        try:
+            title = response.css('.main h1::text').extract()[0]
+            content = response.css('.article-text p::text').extract()
+            return title, content, None
+        except Exception as e:
+
+            # self.logger.warning("error parsing url " + url)
+            # self.logger.warning(e)
+            return None, None, e
+
+    def parse1(self, response, url):
+        try:
+            title = response.css("h1.headline::text").extract()[0]
+            content = response.css('.article-body p::text').extract()
+            return title, content, None
+
+        except Exception as e:
+            # self.logger.warning("error parsing url " + url)
+            # self.logger.warning(e)
+            return None, None, e
+
     def parse(self, response):
         """
         Receive links to archived articles:
         http://web.archive.org/web/{timestamp}/http://www.foxnews.com/politics/{yyyy}/{mm}/{dd}/{article-name}.html
         """
+        url = response.meta['wayback_machine_url']
+        title = None
+        content = None
+
+        # if url.find('www.foxnews.com:80') >=0:
+        #     self.logger.warning("skipping url: " + url)
+        #     return None
+
+
         try:
-            url = response.meta['wayback_machine_url']
-            
             ## parse out topic, date
-            topic, date = info_from_url(url)
+            m = re.search('.+\/([^\/]+)\/(\d{4}\/\d{2}\/\d{2})\/.+', url)
+            topic = m.group(1)
+            date = tuple(m.group(2).split("/"))
 
-            ## parse out date from url
-            m = re.search('.+(\d{4}\/\d{2}\/\d{2}\/).+', 'abcdef')
+            title, content, err = self.parse1(response, url)
+            if title is None:
+                title, content, err = self.parse2(response, url)
 
-            title = response.css("h1.headline::text").extract()[0]
-            text = []
-            body = response.css('.article-body')
-            for p in response.css('.article-body').xpath('p/text()'):
-                try:
-                    text.append(p.extract())
-                except:
-                    pass
+            if title is not None:
 
-            timestamp = response.meta['wayback_machine_time'].timestamp()
-            item = {
-                'title': title,
-                'date': int("".join(date)),
-                'content': "\n".join(text),
-                'topic': topic,
-                'url': url,
-                'source': self.domain
-            }
-            return item
-        except:
+                item = {
+                    'title': title,
+                    'date': int("".join(date)),
+                    'content': "\n".join(content),
+                    'topic': topic,
+                    'url': url,
+                    'source': self.domain
+                }
+                return item
+
+            else:
+                self.logger.warning("could not parse url " + url)
+                self.logger.warning(err)
+
+
+        except Exception as e:
+            self.logger.warning("error parsing url " + url)
+            self.logger.warning(e)
             pass
 

@@ -9,7 +9,7 @@ import os, json
 class NewsScraperPipeline(object):
 
 	def open_spider(self, spider):
-		## make spider dir ifnot exists
+		## make spider dir if not exists
 		self.dir = "data/" + spider.name
 		if not os.path.exists(self.dir):
 			os.makedirs(self.dir)

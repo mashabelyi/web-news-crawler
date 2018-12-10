@@ -23,9 +23,6 @@ class WaybackMachineMiddleware(object):
     # scrapy acts as if the downloader middleware does not modify the
     # passed objects.
 
-    ## TEST COLLAPSING
-	# wget -O collapsed "http://web.archive.org/cdx/search/cdx?url=https://www.foxnews.com/politics/2018/08/03*&output=json&fl=timestamp,original,statuscode,digest&collapse=timestamp:4"
-
     cdx_url_template = ('http://web.archive.org/cdx/search/cdx?url={url}'
                     '&matchType=prefix&output=json&fl=timestamp,original,statuscode,digest&collapse=timestamp:6&filter=statuscode:200')
     archived_url_template = 'http://web.archive.org/web/{timestamp}/{original}'
@@ -63,8 +60,9 @@ class WaybackMachineMiddleware(object):
         	return None
 
         # otherwise request a CDX listing of available articles
-        print("Fetching archives for ")
-        print(request.url)
+        spider.logger.info("Fetching archives for " + request.url)
+        # print("Fetching archives for ")
+        # print(request.url)
 
         return self.build_cdx_request(request)
 
@@ -87,9 +85,10 @@ class WaybackMachineMiddleware(object):
         # parse CDX requests and schedule future snapshot requests
         if meta.get('wayback_machine_cdx_request'):
         	snapshot_requests = self.build_snapshot_requests(response, meta)
-        	print("\nFound {} unique articles in\n{}".format(len(snapshot_requests), request.url))
+        	spider.logger.info("Found {} unique articles in \n{}".format(len(snapshot_requests),request.url.split("&")[0]))
+        	# print("\nFound {} unique articles in\n{}".format(len(snapshot_requests), request.url))
 
-        	# schedule all of the snapshots
+            # schedule all of the snapshots
         	for snapshot_request in snapshot_requests:
         		self.crawler.engine.schedule(snapshot_request, spider)
 
@@ -106,6 +105,9 @@ class WaybackMachineMiddleware(object):
     def build_snapshot_requests(self, response, meta):
         # parse the CDX snapshot data
         data = json.loads(response.text)
+        if len(data) < 2:
+        	return []
+
         keys, rows = data[0], data[1:]
         def build_dict(row):
             new_dict = {}
@@ -134,10 +136,11 @@ class WaybackMachineMiddleware(object):
             	continue
 
             # want unique urls
-            if snapshot['original'] in uniques:
+            name = snapshot['original'].split("/")[-1]
+            if name in uniques:
             	continue
 
-            uniques.append(snapshot['original'])
+            uniques.append(name)
 
             # update the url to point to the snapshot
             url = self.archived_url_template.format(**snapshot)

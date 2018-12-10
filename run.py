@@ -15,16 +15,11 @@ def main():
     	required=True, help='scraping start date')
 	parser.add_argument('--end', type=int, 
     	required=True, help='scraping end date')
-
 	args = parser.parse_args()
-	# print(args.start)
-	# print(args.end)
 
 	settings = get_project_settings()
 	settings.set('WAYBACK_MACHINE_TIME_RANGE', (args.start, args.end))
-	# print(settings.get('WAYBACK_MACHINE_TIME_RANGE'))
-	# exit(0)
-
+	
 	process = CrawlerProcess(settings)
 
 	if args.source == 'cnn':

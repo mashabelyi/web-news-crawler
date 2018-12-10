@@ -42,3 +42,7 @@ Sample article record:
 	"source": "www.cnn.com"
 }
 ```
+
+### Speed
+
+Parses about 15-20 pages/minute.
